@@ -11,4 +11,6 @@ Then upload `dist/omada-network-card.js` to HA `/config/www/` and bump the `?v=`
 
 | patch | what |
 | --- | --- |
-| 0001-fill-panel-height | `.frame` fills the panel view (`height: calc(100vh - var(--qoxi-frame-offset, 58px))`) instead of a fixed 16:9 box; lists scroll inside. Also `ha-card { border-radius: 0 }` for edge-to-edge panel view. |
+| 0001-fill-panel-height | `.frame` fills the panel view, `ha-card` has no outer radius, and a `logo_url` card option renders a custom image instead of the bundled Omada logo (upload the image to `/config/www/`, e.g. `logo_url: /local/ghost-logo.svg`). |
+| 0002-logo-url-option | type for `logo_url` in `ha-types.ts`. |
+| (old) 0001 | `.frame` fills the panel view (`height: calc(100vh - var(--qoxi-frame-offset, 58px))`) instead of a fixed 16:9 box; lists scroll inside. Also `ha-card { border-radius: 0 }` for edge-to-edge panel view. |

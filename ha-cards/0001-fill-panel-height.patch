@@ -17,3 +17,21 @@
        display: grid;
        grid-template-rows: auto 1fr;
        gap: 1rem;
+@@ -156,6 +159,8 @@
+     .brand { padding: 0.9rem 1rem; display: grid; place-items: center; min-height: 7rem; }
+     .brand-logo { display: flex; align-items: center; justify-content: center; }
+     .brand-logo svg { width: clamp(88px, 9vw, 128px); height: auto; }
++    /* qoxi: custom logo via logo_url (any image the browser can load) */
++    .brand-logo img.brand-img { width: 100%; max-width: 220px; height: auto; display: block; }
+     .eyebrow, th { color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.7rem; font-weight: 600; }
+     .site-name { font-size: clamp(1.6rem, 2.6vw, 2.3rem); font-weight: 600; line-height: 1; }
+     .site-meta, .row-subtitle, .chip-sub, .detail-sub { color: var(--muted); }
+@@ -411,7 +416,7 @@
+         <div class="frame">
+           <section class="header">
+             <div class="panel brand">
+-              <div class="brand-logo">${unsafeSVG(this.logoSvg)}</div>
++              <div class="brand-logo">${this._config?.logo_url ? html`<img class="brand-img" src="${this._config.logo_url}" alt="">` : unsafeSVG(this.logoSvg)}</div>
+             </div>
+             <div class="panel header-right">
+               <div class="chips ${this._model.dpi.available ? "has-dpi" : ""}">${this.renderSummaryChips()}</div>
