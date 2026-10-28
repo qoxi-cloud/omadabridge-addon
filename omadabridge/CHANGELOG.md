@@ -1,3 +1,6 @@
+## 2.4.4-qoxi.6
+- Fix: the legacy `omada_*` purge in qoxi.5 matched the wrong prefix and removed nothing.
+
 ## 2.4.4-qoxi.5
 - **Breaking, one-time:** all metrics are now vendor-neutral `net_*` (was `omada_*`), entity unique ids are `net_bridge_*` / `net_client_*`. On first start the bridge removes every retained `omada_*` entity and re-announces everything, so Home Assistant recreates the entities (same entity ids, history restarts).
 - New option `client_retention_hours` (default 168): sensors and device trackers of clients not seen for that long are removed instead of lingering as unavailable. `0` keeps them forever.
