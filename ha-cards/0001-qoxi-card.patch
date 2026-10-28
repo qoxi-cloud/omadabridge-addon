@@ -49,7 +49,7 @@ index 017a599..63d4260 100644
        gateway: 1,
        switch: 2,
 diff --git a/ha-cards/src/omada-network-card.ts b/ha-cards/src/omada-network-card.ts
-index 64bc2a0..22dfc16 100644
+index 64bc2a0..bcff633 100644
 --- a/ha-cards/src/omada-network-card.ts
 +++ b/ha-cards/src/omada-network-card.ts
 @@ -12,6 +12,7 @@ import { inspectionAriaLabel } from "./accessibility";
@@ -90,7 +90,7 @@ index 64bc2a0..22dfc16 100644
      .eyebrow, th { color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.7rem; font-weight: 600; }
      .site-name { font-size: clamp(1.6rem, 2.6vw, 2.3rem); font-weight: 600; line-height: 1; }
      .site-meta, .row-subtitle, .chip-sub, .detail-sub { color: var(--muted); }
-@@ -287,6 +297,14 @@ export class OmadaNetworkCard extends LitElement {
+@@ -287,6 +297,13 @@ export class OmadaNetworkCard extends LitElement {
        .header, .content, .link-grid, .detail-hero, .chart-stack, .detail-bottom { grid-template-columns: 1fr; }
      }
      @media (max-width: 600px) { .chips, .chips.has-dpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -98,14 +98,13 @@ index 64bc2a0..22dfc16 100644
 +
 +    .onu-detail .detail-title .metric-tag { white-space: nowrap; flex: none; }
 +    .onu-detail .detail-stat { min-width: 0; }
-+    .onu-detail .detail-stat-value { font-size: 0.86rem; line-height: 1.25; letter-spacing: -0.01em; white-space: nowrap; }
 +    /* qoxi: breathing room above detail-card titles (they sat on the panel edge) */
 +    .detail-panel .detail-card { padding-top: 1.1rem; }
 +    .detail-panel .detail-card > .section-title, .detail-panel .detail-title { margin-top: 0.15rem; }
      .control-box { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; white-space: normal; }
      .control-box p { margin: 8px 0; overflow-wrap: anywhere; }
      .control-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-@@ -309,7 +327,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -309,7 +326,7 @@ export class OmadaNetworkCard extends LitElement {
    private _selection: Selection | undefined;
    private _dpiCategoryFilters: ReadonlyMap<string, string> = new Map();
    private _clientFilter: "all" | "wireless" | "wired" = "all";
@@ -114,7 +113,7 @@ index 64bc2a0..22dfc16 100644
    private _filteredClients: ClientRecord[] = [];
    private _filteredDevices: DeviceRecord[] = [];
    private _visibleClients: ClientRecord[] = [];
-@@ -410,8 +428,8 @@ export class OmadaNetworkCard extends LitElement {
+@@ -410,8 +427,8 @@ export class OmadaNetworkCard extends LitElement {
        <ha-card>
          <div class="frame">
            <section class="header">
@@ -125,7 +124,7 @@ index 64bc2a0..22dfc16 100644
              </div>
              <div class="panel header-right">
                <div class="chips ${this._model.dpi.available ? "has-dpi" : ""}">${this.renderSummaryChips()}</div>
-@@ -470,9 +488,10 @@ export class OmadaNetworkCard extends LitElement {
+@@ -470,9 +487,10 @@ export class OmadaNetworkCard extends LitElement {
      return devices.filter((device) => device.type === filter);
    }
  
@@ -138,7 +137,7 @@ index 64bc2a0..22dfc16 100644
      }
  
      const nextDevices = this.computeFilteredDevices(filter);
-@@ -600,8 +619,10 @@ export class OmadaNetworkCard extends LitElement {
+@@ -600,8 +618,10 @@ export class OmadaNetworkCard extends LitElement {
                const status = wanDisplayStatus(row, wan);
                const latency = wan?.metrics.omada_wan_latency ?? 0;
                const speed = wan?.metrics.omada_wan_link_speed_mbps ?? 0;
@@ -151,7 +150,7 @@ index 64bc2a0..22dfc16 100644
                return html`
                  <tr>
                    <td>${ispName}</td>
-@@ -698,7 +719,8 @@ export class OmadaNetworkCard extends LitElement {
+@@ -698,7 +718,8 @@ export class OmadaNetworkCard extends LitElement {
            <div class="row-subtitle">${this._filteredDevices.length} shown</div>
          </div>
          <div class="pill-row" role="group" aria-label="Device filters">
@@ -161,7 +160,7 @@ index 64bc2a0..22dfc16 100644
            ${this.renderDeviceFilterPill("controller", `Controller (${this._model!.siteSummary.controllers})`)}
            ${this.renderDeviceFilterPill("gateway", `Gateway (${this._model!.siteSummary.gateways})`)}
            ${this.renderDeviceFilterPill("switch", `Switch (${this._model!.siteSummary.switches})`)}
-@@ -707,6 +729,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -707,6 +728,7 @@ export class OmadaNetworkCard extends LitElement {
          <div class="list-scroll">
            ${repeat(devices, (device) => device.key, (device) => {
              const selected = this._selection?.kind === "device" && this._selection.key === device.key;
@@ -169,7 +168,7 @@ index 64bc2a0..22dfc16 100644
              const cpu = device.metrics.omada_device_cpu_percentage ?? 0;
              const mem = device.metrics.omada_device_mem_percentage ?? 0;
              const isUp = isDeviceConnected(device.status);
-@@ -746,7 +769,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -746,7 +768,7 @@ export class OmadaNetworkCard extends LitElement {
    }
  
    private renderDeviceFilterPill(
@@ -178,7 +177,7 @@ index 64bc2a0..22dfc16 100644
      label: string
    ) {
      return html`
-@@ -837,6 +860,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -837,6 +859,7 @@ export class OmadaNetworkCard extends LitElement {
        return renderDpiDetail(this._model.dpi, this._dpiCategoryFilters, (siteKey, categoryKey) => this.selectDpiCategory(siteKey, categoryKey));
      }
      if (this._selection.kind === "device") {
@@ -186,7 +185,7 @@ index 64bc2a0..22dfc16 100644
        return this._selectedDevice ? this.renderDeviceDetail(this._selectedDevice) : html`<div class="empty">Device not found.</div>`;
      }
      return this._selectedClient ? this.renderClientDetail(this._selectedClient) : html`<div class="empty">Client not found.</div>`;
-@@ -1148,6 +1172,129 @@ export class OmadaNetworkCard extends LitElement {
+@@ -1148,6 +1171,136 @@ export class OmadaNetworkCard extends LitElement {
      </div>`;
    }
  
@@ -259,8 +258,8 @@ index 64bc2a0..22dfc16 100644
 +              </div>
 +            </div>
 +            <div class="detail-stats">
-+              ${this.renderDetailStat("RX Power", dbm(m.onu_rx_power_dbm ?? -40))}
-+              ${this.renderDetailStat("TX Power", dbm(m.onu_tx_power_dbm ?? -40))}
++              ${this.renderUnitStat("RX", dbm(m.onu_rx_power_dbm ?? -40))}
++              ${this.renderUnitStat("TX", dbm(m.onu_tx_power_dbm ?? -40))}
 +              ${this.renderDetailStat("Uptime", formatUptimeSeconds(m.onu_uptime_seconds ?? 0))}
 +              ${this.renderDetailStat("In state", formatUptimeSeconds(m.onu_time_in_state_seconds ?? 0))}
 +            </div>
@@ -268,10 +267,10 @@ index 64bc2a0..22dfc16 100644
 +          <div class="detail-card">
 +            <div class="section-title">Quick Read</div>
 +            <div class="detail-stats">
-+              ${this.renderDetailStat("Down", formatRateBytes(m.onu_gem_down_rate ?? 0))}
-+              ${this.renderDetailStat("Up", formatRateBytes(m.onu_gem_up_rate ?? 0))}
-+              ${this.renderDetailStat("Optic", `${(m.onu_optic_temp ?? 0).toFixed(0)} °C`)}
-+              ${this.renderDetailStat("CPU", `${(m.onu_cpu_temp ?? 0).toFixed(0)} °C`)}
++              ${this.renderUnitStat("Down", formatRateBytes(m.onu_gem_down_rate ?? 0))}
++              ${this.renderUnitStat("Up", formatRateBytes(m.onu_gem_up_rate ?? 0))}
++              ${this.renderUnitStat("Optic", `${(m.onu_optic_temp ?? 0).toFixed(0)} °C`)}
++              ${this.renderUnitStat("CPU", `${(m.onu_cpu_temp ?? 0).toFixed(0)} °C`)}
 +            </div>
 +          </div>
 +        </div>
@@ -311,6 +310,13 @@ index 64bc2a0..22dfc16 100644
 +        </div>
 +      </div>
 +    `;
++  }
++
++  /** qoxi: "652 KB/s" → label "DOWN · KB/s", value "652" — keeps tiles as short as upstream ones. */
++  private renderUnitStat(label: string, formatted: string) {
++    const match = /^(-?[\d.,]+)\s*(.+)$/.exec(formatted.trim());
++    if (!match) return this.renderDetailStat(label, formatted);
++    return this.renderDetailStat(`${label} · ${match[2]}`, match[1]!);
 +  }
 +
    private renderDetailStat(label: string, value: string) {
