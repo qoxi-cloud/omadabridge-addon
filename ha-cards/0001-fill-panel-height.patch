@@ -1,5 +1,5 @@
---- a/b/src/omada-network-card.ts	2026-10-28 15:34:21
-+++ b/src/omada-network-card.ts	2026-10-28 15:34:21
+--- a/src/omada-network-card.ts
++++ b/src/omada-network-card.ts
 @@ -133,7 +133,9 @@
        box-shadow: 0 24px 56px rgba(0, 0, 0, 0.28);
      }
