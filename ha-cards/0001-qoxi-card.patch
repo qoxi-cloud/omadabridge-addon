@@ -49,7 +49,7 @@ index 017a599..63d4260 100644
        gateway: 1,
        switch: 2,
 diff --git a/ha-cards/src/omada-network-card.ts b/ha-cards/src/omada-network-card.ts
-index 64bc2a0..40bde2c 100644
+index 64bc2a0..22dfc16 100644
 --- a/ha-cards/src/omada-network-card.ts
 +++ b/ha-cards/src/omada-network-card.ts
 @@ -12,6 +12,7 @@ import { inspectionAriaLabel } from "./accessibility";
@@ -98,7 +98,7 @@ index 64bc2a0..40bde2c 100644
 +
 +    .onu-detail .detail-title .metric-tag { white-space: nowrap; flex: none; }
 +    .onu-detail .detail-stat { min-width: 0; }
-+    .onu-detail .detail-stat-value { font-size: 0.92rem; line-height: 1.25; overflow-wrap: anywhere; }
++    .onu-detail .detail-stat-value { font-size: 0.86rem; line-height: 1.25; letter-spacing: -0.01em; white-space: nowrap; }
 +    /* qoxi: breathing room above detail-card titles (they sat on the panel edge) */
 +    .detail-panel .detail-card { padding-top: 1.1rem; }
 +    .detail-panel .detail-card > .section-title, .detail-panel .detail-title { margin-top: 0.15rem; }
@@ -251,7 +251,7 @@ index 64bc2a0..40bde2c 100644
 +            <div class="detail-title">
 +              <div>
 +                <div class="detail-name">${device.name}</div>
-+                <div class="detail-sub">${device.model || "ONU"} · ${String(device.attrs.pon_state || device.status)}</div>
++                <div class="detail-sub">${device.model || "ONU"} · ${String(device.attrs.pon_state || device.status).replace(/\s*-\s*/, " ").replace(/\s+state$/i, "")}</div>
 +              </div>
 +              <div class="metric-group">
 +                <span class="metric-tag">${device.version || "PON"}</span>
