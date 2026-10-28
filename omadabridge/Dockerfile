@@ -1,6 +1,6 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.21
 ARG FORK_REPO=https://github.com/qoxi-cloud/omada_exporter
-ARG FORK_REF=82c2be66cd2f3ca57ddbf08bf936c3ce98577141
+ARG FORK_REF=3d0f7274ebc8eb821a48ee3d21ef48e8b3f9930b
 
 # Build OmadaBridge from the qoxi-cloud fork (upstream RCooLeR/omada_exporter + our patches).
 FROM golang:1.27-alpine AS builder
