@@ -1,5 +1,5 @@
 name: OmadaBridge
-version: "2.4.4-qoxi.4"
+version: "2.4.4-qoxi.5"
 slug: omadabridge
 description: Read-only TP-Link Omada → Home Assistant bridge (MQTT Discovery), packaged from RCooLeR/omada_exporter
 url: https://github.com/qoxi-cloud/omadabridge-addon/tree/main/omadabridge
@@ -27,6 +27,7 @@ options:
   omada_insecure: true
   mqtt_interval: 30
   mqtt_expire_after: 120
+  client_retention_hours: 168
   track_port_metrics: true
   track_client_metrics: true
   track_network_quality_metrics: true
@@ -46,6 +47,7 @@ schema:
   omada_insecure: bool
   mqtt_interval: int(10,3600)
   mqtt_expire_after: int(30,86400)
+  client_retention_hours: int(0,8760)
   track_port_metrics: bool
   track_client_metrics: bool
   track_network_quality_metrics: bool

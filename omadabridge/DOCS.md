@@ -17,6 +17,7 @@ Home Assistant. It polls a TP-Link Omada controller and publishes MQTT Discovery
 | `omada_host` | Controller URL, e.g. `https://192.168.0.2:443` |
 | `omada_site` | Site name to monitor |
 | `omada_insecure` | Skip TLS verification (self-signed controller cert) |
+| `client_retention_hours` | Remove entities/trackers of clients not seen for this many hours (0 = never) |
 | `mqtt_interval` / `mqtt_expire_after` | Publish interval / entity expiry, seconds |
 | `track_*` | Enable port, client, network-quality, DPI insight metrics |
 | `mqtt_host` … | Only to override the Supervisor-provided broker |

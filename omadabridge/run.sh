@@ -33,6 +33,7 @@ export OMADA_MQTT_DISCOVERY_PREFIX="homeassistant"
 export OMADA_MQTT_RETAIN="true"
 export OMADA_MQTT_INTERVAL="$(bashio::config 'mqtt_interval')"
 export OMADA_MQTT_EXPIRE_AFTER="$(bashio::config 'mqtt_expire_after')"
+export OMADA_MQTT_CLIENT_RETENTION_HOURS="$(bashio::config 'client_retention_hours')"
 
 if bashio::config.has_value 'mqtt_host'; then
   export OMADA_MQTT_BROKER="tcp://$(bashio::config 'mqtt_host'):$(bashio::config 'mqtt_port')"

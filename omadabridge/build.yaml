@@ -2,4 +2,4 @@ build_from:
   amd64: ghcr.io/home-assistant/amd64-base:3.21
   aarch64: ghcr.io/home-assistant/aarch64-base:3.21
 args:
-  FORK_REF: "92e3adbd8c347f19a7099bc85f5d2de54833c91f"
+  FORK_REF: "d3e2941fe185addd39515a53889ac8333a5e701f"
