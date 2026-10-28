@@ -1,3 +1,6 @@
+## 2.4.4-qoxi.7
+- Retention: trackers restored from MQTT without a `last_seen` now start their retention window at restart instead of living forever.
+
 ## 2.4.4-qoxi.6
 - Fix: the legacy `omada_*` purge in qoxi.5 matched the wrong prefix and removed nothing.
 
