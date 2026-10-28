@@ -47,7 +47,7 @@ index 017a599..63d4260 100644
        gateway: 1,
        switch: 2,
 diff --git a/ha-cards/src/omada-network-card.ts b/ha-cards/src/omada-network-card.ts
-index 64bc2a0..bf6f962 100644
+index 64bc2a0..57c7d6e 100644
 --- a/ha-cards/src/omada-network-card.ts
 +++ b/ha-cards/src/omada-network-card.ts
 @@ -12,6 +12,7 @@ import { inspectionAriaLabel } from "./accessibility";
@@ -75,16 +75,20 @@ index 64bc2a0..bf6f962 100644
        display: grid;
        grid-template-rows: auto 1fr;
        gap: 1rem;
-@@ -156,6 +160,8 @@ export class OmadaNetworkCard extends LitElement {
+@@ -156,6 +160,12 @@ export class OmadaNetworkCard extends LitElement {
      .brand { padding: 0.9rem 1rem; display: grid; place-items: center; min-height: 7rem; }
      .brand-logo { display: flex; align-items: center; justify-content: center; }
      .brand-logo svg { width: clamp(88px, 9vw, 128px); height: auto; }
 +    /* qoxi: custom logo via logo_url (any image the browser can load) */
 +    .brand-logo img.brand-img { width: 100%; max-width: 220px; height: auto; display: block; }
++    /* qoxi: with logo_url the brand panel becomes a full-bleed image tile */
++    .panel.brand.brand-full { padding: 0; overflow: hidden; min-height: 0; }
++    .panel.brand.brand-full .brand-logo { width: 100%; height: 100%; }
++    .panel.brand.brand-full img.brand-img { width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: center; }
      .eyebrow, th { color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.7rem; font-weight: 600; }
      .site-name { font-size: clamp(1.6rem, 2.6vw, 2.3rem); font-weight: 600; line-height: 1; }
      .site-meta, .row-subtitle, .chip-sub, .detail-sub { color: var(--muted); }
-@@ -309,7 +315,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -309,7 +319,7 @@ export class OmadaNetworkCard extends LitElement {
    private _selection: Selection | undefined;
    private _dpiCategoryFilters: ReadonlyMap<string, string> = new Map();
    private _clientFilter: "all" | "wireless" | "wired" = "all";
@@ -93,16 +97,18 @@ index 64bc2a0..bf6f962 100644
    private _filteredClients: ClientRecord[] = [];
    private _filteredDevices: DeviceRecord[] = [];
    private _visibleClients: ClientRecord[] = [];
-@@ -411,7 +417,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -410,8 +420,8 @@ export class OmadaNetworkCard extends LitElement {
+       <ha-card>
          <div class="frame">
            <section class="header">
-             <div class="panel brand">
+-            <div class="panel brand">
 -              <div class="brand-logo">${unsafeSVG(this.logoSvg)}</div>
++            <div class="panel brand ${this._config?.logo_url ? "brand-full" : ""}">
 +              <div class="brand-logo">${this._config?.logo_url ? html`<img class="brand-img" src="${this._config.logo_url}" alt="">` : unsafeSVG(this.logoSvg)}</div>
              </div>
              <div class="panel header-right">
                <div class="chips ${this._model.dpi.available ? "has-dpi" : ""}">${this.renderSummaryChips()}</div>
-@@ -470,7 +476,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -470,7 +480,7 @@ export class OmadaNetworkCard extends LitElement {
      return devices.filter((device) => device.type === filter);
    }
  
@@ -111,7 +117,7 @@ index 64bc2a0..bf6f962 100644
      if (this._deviceFilter === filter) {
        return;
      }
-@@ -600,8 +606,10 @@ export class OmadaNetworkCard extends LitElement {
+@@ -600,8 +610,10 @@ export class OmadaNetworkCard extends LitElement {
                const status = wanDisplayStatus(row, wan);
                const latency = wan?.metrics.omada_wan_latency ?? 0;
                const speed = wan?.metrics.omada_wan_link_speed_mbps ?? 0;
@@ -124,7 +130,7 @@ index 64bc2a0..bf6f962 100644
                return html`
                  <tr>
                    <td>${ispName}</td>
-@@ -699,6 +707,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -699,6 +711,7 @@ export class OmadaNetworkCard extends LitElement {
          </div>
          <div class="pill-row" role="group" aria-label="Device filters">
            ${this.renderDeviceFilterPill("all", `All (${this._model!.devices.length})`)}
@@ -132,7 +138,7 @@ index 64bc2a0..bf6f962 100644
            ${this.renderDeviceFilterPill("controller", `Controller (${this._model!.siteSummary.controllers})`)}
            ${this.renderDeviceFilterPill("gateway", `Gateway (${this._model!.siteSummary.gateways})`)}
            ${this.renderDeviceFilterPill("switch", `Switch (${this._model!.siteSummary.switches})`)}
-@@ -707,6 +716,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -707,6 +720,7 @@ export class OmadaNetworkCard extends LitElement {
          <div class="list-scroll">
            ${repeat(devices, (device) => device.key, (device) => {
              const selected = this._selection?.kind === "device" && this._selection.key === device.key;
@@ -140,7 +146,7 @@ index 64bc2a0..bf6f962 100644
              const cpu = device.metrics.omada_device_cpu_percentage ?? 0;
              const mem = device.metrics.omada_device_mem_percentage ?? 0;
              const isUp = isDeviceConnected(device.status);
-@@ -746,7 +756,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -746,7 +760,7 @@ export class OmadaNetworkCard extends LitElement {
    }
  
    private renderDeviceFilterPill(
@@ -149,7 +155,7 @@ index 64bc2a0..bf6f962 100644
      label: string
    ) {
      return html`
-@@ -837,6 +847,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -837,6 +851,7 @@ export class OmadaNetworkCard extends LitElement {
        return renderDpiDetail(this._model.dpi, this._dpiCategoryFilters, (siteKey, categoryKey) => this.selectDpiCategory(siteKey, categoryKey));
      }
      if (this._selection.kind === "device") {
@@ -157,7 +163,7 @@ index 64bc2a0..bf6f962 100644
        return this._selectedDevice ? this.renderDeviceDetail(this._selectedDevice) : html`<div class="empty">Device not found.</div>`;
      }
      return this._selectedClient ? this.renderClientDetail(this._selectedClient) : html`<div class="empty">Client not found.</div>`;
-@@ -1148,6 +1159,129 @@ export class OmadaNetworkCard extends LitElement {
+@@ -1148,6 +1163,129 @@ export class OmadaNetworkCard extends LitElement {
      </div>`;
    }
  
