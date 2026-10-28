@@ -9,7 +9,7 @@ Home Assistant. It polls a TP-Link Omada controller and publishes MQTT Discovery
 - An Omada local user (Viewer role is enough) with 2FA disabled — `omada_user` / `omada_pass`.
 - Optional but recommended: an Open API app (Client Credentials, Viewer) — `omada_client_id` / `omada_secret_id`.
   Without it WAN, ISP, VPN and detailed client metrics are skipped.
-- The upstream Lovelace card `omada-network-card.js` from the same release for the dashboard.
+- Cards: the qoxi Mushroom fork (`mushroom-onu-card`, `mushroom-isp-card`, `mushroom-omada-device(s)-card`, `mushroom-omada-clients-card`).
 
 ## Options
 | Option | Meaning |

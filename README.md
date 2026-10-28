@@ -10,4 +10,4 @@ https://github.com/qoxi-cloud/omadabridge-addon
 
 - **OmadaBridge** — read-only TP-Link Omada → Home Assistant bridge (MQTT Discovery).
   Packages the upstream [RCooLeR/omada_exporter](https://github.com/RCooLeR/omada_exporter) binary
-  as a Supervisor add-on, pairs with the upstream `omada-network-card` Lovelace card.
+  as a Supervisor add-on. Dashboards: the qoxi Mushroom fork (https://github.com/qoxi-cloud/lovelace-mushroom) reads its entities through the vendor-neutral `net_*` contract.
