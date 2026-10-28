@@ -1,0 +1,437 @@
+diff --git a/ha-cards/src/ha-types.ts b/ha-cards/src/ha-types.ts
+index 792815d..17044fe 100644
+--- a/ha-cards/src/ha-types.ts
++++ b/ha-cards/src/ha-types.ts
+@@ -10,12 +10,17 @@ export interface DashboardScope {
+   bridge_id?: string;
+   site?: string;
+   site_id?: string;
++  onu_prefix?: string;
+ }
+ 
+ export interface LovelaceCardConfig extends DashboardScope {
+   type: string;
+   title?: string;
+   logo_mode?: "light" | "dark" | "auto";
++  /** qoxi: image URL that replaces the bundled Omada logo */
++  logo_url?: string;
++  /** qoxi: entity-id prefix of the 8311 ONU Monitor sensors (default "8311_onu_"); "" disables */
++  onu_prefix?: string;
+   device_limit?: number;
+   client_limit?: number;
+   show_vpn_peers?: boolean;
+diff --git a/ha-cards/src/model.ts b/ha-cards/src/model.ts
+index 017a599..63d4260 100644
+--- a/ha-cards/src/model.ts
++++ b/ha-cards/src/model.ts
+@@ -18,6 +18,7 @@ import { toNumber } from "./format";
+ import { attachNetworkQuality, isNetworkQualityMetric } from "./network-quality-model";
+ import { isControlEntity } from "./control-model";
+ import { linkMetricValue } from "./wan-status-model";
++import { collectOnuDevices, DEFAULT_ONU_PREFIX } from "./onu-model";
+ 
+ const dashboardModelCache = new WeakMap<HomeAssistant["states"], Map<string, DashboardModel>>();
+ const recordUpdatedAt = new WeakMap<object, number>();
+@@ -1086,8 +1087,12 @@ export function buildDashboardModel(hass: HomeAssistant, filter?: string | Dashb
+     }
+   }
+ 
+-  const deviceList = Array.from(devices.values()).sort((left, right) => {
++  // qoxi: ONU sticks from the 8311 integration join the device list.
++  const onuPrefix = scope.onu_prefix === undefined ? DEFAULT_ONU_PREFIX : scope.onu_prefix;
++  const onuDevices = onuPrefix ? collectOnuDevices(hass, onuPrefix, scope.site || "") : [];
++  const deviceList = Array.from(devices.values()).concat(onuDevices).sort((left, right) => {
+     const typeOrder: Record<string, number> = {
++      onu: -1,
+       controller: 0,
+       gateway: 1,
+       switch: 2,
+diff --git a/ha-cards/src/omada-network-card.ts b/ha-cards/src/omada-network-card.ts
+index 64bc2a0..bf6f962 100644
+--- a/ha-cards/src/omada-network-card.ts
++++ b/ha-cards/src/omada-network-card.ts
+@@ -12,6 +12,7 @@ import { inspectionAriaLabel } from "./accessibility";
+ import { dpiStyles, renderDpiDetail } from "./dpi-detail";
+ import { networkQualityStyles, renderNetworkQualityDetail } from "./network-quality-detail";
+ import { ChartController, deviceResourceSummarySignature } from "./chart-controller";
++import { findOnuForLink } from "./onu-model";
+ import {
+   formatBytes,
+   formatLatency,
+@@ -129,11 +130,14 @@ export class OmadaNetworkCard extends LitElement {
+       color: var(--text);
+       background: var(--bg);
+       border: 1px solid rgba(255, 255, 255, 0.06);
+-      border-radius: 28px;
++      /* qoxi: edge-to-edge in the panel view, no rounded outer corners */
++      border-radius: 0;
+       box-shadow: 0 24px 56px rgba(0, 0, 0, 0.28);
+     }
+     .frame {
+-      aspect-ratio: 16 / 9;
++      /* qoxi: fill the panel view instead of a fixed 16:9 box */
++      height: calc(100vh - var(--qoxi-frame-offset, 58px));
++      box-sizing: border-box;
+       display: grid;
+       grid-template-rows: auto 1fr;
+       gap: 1rem;
+@@ -156,6 +160,8 @@ export class OmadaNetworkCard extends LitElement {
+     .brand { padding: 0.9rem 1rem; display: grid; place-items: center; min-height: 7rem; }
+     .brand-logo { display: flex; align-items: center; justify-content: center; }
+     .brand-logo svg { width: clamp(88px, 9vw, 128px); height: auto; }
++    /* qoxi: custom logo via logo_url (any image the browser can load) */
++    .brand-logo img.brand-img { width: 100%; max-width: 220px; height: auto; display: block; }
+     .eyebrow, th { color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.7rem; font-weight: 600; }
+     .site-name { font-size: clamp(1.6rem, 2.6vw, 2.3rem); font-weight: 600; line-height: 1; }
+     .site-meta, .row-subtitle, .chip-sub, .detail-sub { color: var(--muted); }
+@@ -309,7 +315,7 @@ export class OmadaNetworkCard extends LitElement {
+   private _selection: Selection | undefined;
+   private _dpiCategoryFilters: ReadonlyMap<string, string> = new Map();
+   private _clientFilter: "all" | "wireless" | "wired" = "all";
+-  private _deviceFilter: "all" | "controller" | "gateway" | "switch" | "ap" = "all";
++  private _deviceFilter: "all" | "onu" | "controller" | "gateway" | "switch" | "ap" = "all";
+   private _filteredClients: ClientRecord[] = [];
+   private _filteredDevices: DeviceRecord[] = [];
+   private _visibleClients: ClientRecord[] = [];
+@@ -411,7 +417,7 @@ export class OmadaNetworkCard extends LitElement {
+         <div class="frame">
+           <section class="header">
+             <div class="panel brand">
+-              <div class="brand-logo">${unsafeSVG(this.logoSvg)}</div>
++              <div class="brand-logo">${this._config?.logo_url ? html`<img class="brand-img" src="${this._config.logo_url}" alt="">` : unsafeSVG(this.logoSvg)}</div>
+             </div>
+             <div class="panel header-right">
+               <div class="chips ${this._model.dpi.available ? "has-dpi" : ""}">${this.renderSummaryChips()}</div>
+@@ -470,7 +476,7 @@ export class OmadaNetworkCard extends LitElement {
+     return devices.filter((device) => device.type === filter);
+   }
+ 
+-  private setDeviceFilter(filter: "all" | "controller" | "gateway" | "switch" | "ap"): void {
++  private setDeviceFilter(filter: "all" | "onu" | "controller" | "gateway" | "switch" | "ap"): void {
+     if (this._deviceFilter === filter) {
+       return;
+     }
+@@ -600,8 +606,10 @@ export class OmadaNetworkCard extends LitElement {
+               const status = wanDisplayStatus(row, wan);
+               const latency = wan?.metrics.omada_wan_latency ?? 0;
+               const speed = wan?.metrics.omada_wan_link_speed_mbps ?? 0;
+-              const rx = (wan?.metrics.omada_wan_rx_rate ?? 0) * 1024;
+-              const tx = (wan?.metrics.omada_wan_tx_rate ?? 0) * 1024;
++              // qoxi: virtual WANs have no Omada rates; take them from the matching ONU's GEM counters.
++              const onu = findOnuForLink(this.onuDevices, row.name) ?? findOnuForLink(this.onuDevices, wan?.name ?? "");
++              const rx = (wan?.metrics.omada_wan_rx_rate ?? 0) * 1024 || (onu?.metrics.onu_gem_down_rate ?? 0);
++              const tx = (wan?.metrics.omada_wan_tx_rate ?? 0) * 1024 || (onu?.metrics.onu_gem_up_rate ?? 0);
+               return html`
+                 <tr>
+                   <td>${ispName}</td>
+@@ -699,6 +707,7 @@ export class OmadaNetworkCard extends LitElement {
+         </div>
+         <div class="pill-row" role="group" aria-label="Device filters">
+           ${this.renderDeviceFilterPill("all", `All (${this._model!.devices.length})`)}
++          ${this.onuCount > 0 ? this.renderDeviceFilterPill("onu", `ONU (${this.onuCount})`) : nothing}
+           ${this.renderDeviceFilterPill("controller", `Controller (${this._model!.siteSummary.controllers})`)}
+           ${this.renderDeviceFilterPill("gateway", `Gateway (${this._model!.siteSummary.gateways})`)}
+           ${this.renderDeviceFilterPill("switch", `Switch (${this._model!.siteSummary.switches})`)}
+@@ -707,6 +716,7 @@ export class OmadaNetworkCard extends LitElement {
+         <div class="list-scroll">
+           ${repeat(devices, (device) => device.key, (device) => {
+             const selected = this._selection?.kind === "device" && this._selection.key === device.key;
++            if (device.type === "onu") return this.renderOnuRow(device, selected);
+             const cpu = device.metrics.omada_device_cpu_percentage ?? 0;
+             const mem = device.metrics.omada_device_mem_percentage ?? 0;
+             const isUp = isDeviceConnected(device.status);
+@@ -746,7 +756,7 @@ export class OmadaNetworkCard extends LitElement {
+   }
+ 
+   private renderDeviceFilterPill(
+-    filter: "all" | "controller" | "gateway" | "switch" | "ap",
++    filter: "all" | "onu" | "controller" | "gateway" | "switch" | "ap",
+     label: string
+   ) {
+     return html`
+@@ -837,6 +847,7 @@ export class OmadaNetworkCard extends LitElement {
+       return renderDpiDetail(this._model.dpi, this._dpiCategoryFilters, (siteKey, categoryKey) => this.selectDpiCategory(siteKey, categoryKey));
+     }
+     if (this._selection.kind === "device") {
++      if (this._selectedDevice?.type === "onu") return this.renderOnuDetail(this._selectedDevice);
+       return this._selectedDevice ? this.renderDeviceDetail(this._selectedDevice) : html`<div class="empty">Device not found.</div>`;
+     }
+     return this._selectedClient ? this.renderClientDetail(this._selectedClient) : html`<div class="empty">Client not found.</div>`;
+@@ -1148,6 +1159,129 @@ export class OmadaNetworkCard extends LitElement {
+     </div>`;
+   }
+ 
++  // ---- qoxi: ONU sticks -------------------------------------------------
++  private get onuDevices(): DeviceRecord[] {
++    return (this._model?.devices ?? []).filter((device) => device.type === "onu");
++  }
++
++  private get onuCount(): number {
++    return this.onuDevices.length;
++  }
++
++  private onuPonShort(device: DeviceRecord): string {
++    const state = String(device.attrs.pon_state ?? "");
++    const match = /^(O\d(?:\.\d)?)/.exec(state);
++    return match ? match[1]! : state || "-";
++  }
++
++  private renderOnuRow(device: DeviceRecord, selected: boolean) {
++    const isUp = isDeviceConnected(device.status);
++    const rx = device.metrics.onu_rx_power_dbm ?? 0;
++    const temp = device.metrics.onu_optic_temp ?? 0;
++    const alarm = (device.metrics.onu_alarm ?? 0) > 0;
++    return html`
++      <button
++        type="button"
++        class="card-row ${selected ? "selected" : ""}"
++        aria-label=${inspectionAriaLabel("device", device.name)}
++        aria-pressed=${selected}
++        @click=${() => this.selectDevice(device.key)}
++      >
++        <span class="row-top">
++          <span>
++            <span class="row-title">${device.name}</span>
++            <span class="row-subtitle">${device.model || "ONU"} · ${String(device.attrs.olt_vendor || "-")} OLT</span>
++          </span>
++          <span class="metric-tag"><span class="status-dot ${isUp ? "status-up" : "status-down"}"></span>${isUp ? "PON up" : "PON down"}</span>
++        </span>
++        <span class="metric-group">
++          <span class="metric-tag">onu</span>
++          <span class="metric-tag">${this.onuPonShort(device)}</span>
++          <span class="metric-tag">RX ${isUp ? `${rx.toFixed(1)} dBm` : "-"}</span>
++          <span class="metric-tag">${temp.toFixed(0)} °C</span>
++          ${alarm ? html`<span class="metric-tag">Alarm</span>` : nothing}
++        </span>
++        <span class="row-bottom">
++          <span class="row-subtitle">${String(device.attrs.gpon_serial || device.attrs.serial || "")} · ${device.version || "PON"}</span>
++          <span class="row-subtitle">${formatRateBytes(device.metrics.onu_gem_down_rate ?? 0)} ↓ ${formatRateBytes(device.metrics.onu_gem_up_rate ?? 0)} ↑</span>
++        </span>
++      </button>
++    `;
++  }
++
++  private renderOnuDetail(device: DeviceRecord) {
++    const m = device.metrics;
++    const isUp = isDeviceConnected(device.status);
++    const dbm = (value: number) => (isUp && value > -40 ? `${value.toFixed(2)} dBm` : "-");
++    return html`
++      <div class="detail-shell">
++        <div class="detail-hero">
++          <div class="detail-card">
++            <div class="detail-title">
++              <div>
++                <div class="detail-name">${device.name}</div>
++                <div class="detail-sub">${device.model || "ONU"} · ${String(device.attrs.vendor || "")} · ${String(device.attrs.pon_state || device.status)}</div>
++              </div>
++              <div class="metric-group">
++                <span class="metric-tag">onu</span>
++                <span class="metric-tag">${device.version || "PON"}</span>
++                <span class="metric-tag">bank ${String(device.attrs.firmware_bank || "?")}</span>
++              </div>
++            </div>
++            <div class="detail-stats">
++              ${this.renderDetailStat("RX Power", dbm(m.onu_rx_power_dbm ?? -40))}
++              ${this.renderDetailStat("TX Power", dbm(m.onu_tx_power_dbm ?? -40))}
++              ${this.renderDetailStat("Uptime", formatUptimeSeconds(m.onu_uptime_seconds ?? 0))}
++              ${this.renderDetailStat("In state", formatUptimeSeconds(m.onu_time_in_state_seconds ?? 0))}
++            </div>
++          </div>
++          <div class="detail-card">
++            <div class="section-title">Quick Read</div>
++            <div class="detail-stats">
++              ${this.renderDetailStat("Down", formatRateBytes(m.onu_gem_down_rate ?? 0))}
++              ${this.renderDetailStat("Up", formatRateBytes(m.onu_gem_up_rate ?? 0))}
++              ${this.renderDetailStat("Optic", `${(m.onu_optic_temp ?? 0).toFixed(1)} °C`)}
++              ${this.renderDetailStat("CPU", `${(m.onu_cpu_temp ?? 0).toFixed(1)} °C`)}
++            </div>
++          </div>
++        </div>
++        <div class="detail-bottom">
++          <div class="panel table-card">
++            <div class="section-title"><span>PON Link</span><span>${String(device.attrs.olt_vendor || "-")} OLT</span></div>
++            <div class="table">
++              <table><tbody>
++                ${this.attributeRow("PON state", String(device.attrs.pon_state || "-"))}
++                ${this.attributeRow("Previous state", String(device.attrs.pon_previous_state || "-"))}
++                ${this.attributeRow("PON mode", String(device.attrs.pon_mode || "-"))}
++                ${this.attributeRow("GPON serial", String(device.attrs.gpon_serial || "-"))}
++                ${this.attributeRow("SFP serial", String(device.attrs.serial || "-"))}
++                ${this.attributeRow("Voltage", `${(m.onu_voltage ?? 0).toFixed(3)} V`)}
++                ${this.attributeRow("TX bias", `${(m.onu_tx_bias_ma ?? 0).toFixed(2)} mA`)}
++                ${this.attributeRow("Memory", formatPercent(m.onu_mem_pct ?? 0))}
++                ${this.attributeRow("Load 1m", (m.onu_load_1m ?? 0).toFixed(2))}
++              </tbody></table>
++            </div>
++          </div>
++          <div class="panel table-card">
++            <div class="section-title"><span>Traffic &amp; Errors</span><span>GEM</span></div>
++            <div class="table">
++              <table><tbody>
++                ${this.attributeRow("Downstream total", formatBytes(m.onu_gem_down_bytes ?? 0))}
++                ${this.attributeRow("Upstream total", formatBytes(m.onu_gem_up_bytes ?? 0))}
++                ${this.attributeRow("GEM key errors", String(m.onu_gem_key_errors ?? 0))}
++                ${this.attributeRow("FEC corrected", String(m.onu_fec_corrected ?? 0))}
++                ${this.attributeRow("FEC uncorrected", String(m.onu_fec_uncorrected ?? 0))}
++                ${this.attributeRow("BIP errors", String(m.onu_bip_errors ?? 0))}
++                ${this.attributeRow("LODS events", String(m.onu_lods_events ?? 0))}
++                ${this.attributeRow("Alarm", (m.onu_alarm ?? 0) > 0 ? "LOS / LODS / LOF" : "none")}
++              </tbody></table>
++            </div>
++          </div>
++        </div>
++      </div>
++    `;
++  }
++
+   private renderDetailStat(label: string, value: string) {
+     return html`<div class="detail-stat"><div class="detail-stat-label">${label}</div><div class="detail-stat-value">${value}</div></div>`;
+   }
+diff --git a/ha-cards/src/onu-model.ts b/ha-cards/src/onu-model.ts
+new file mode 100644
+index 0000000..b4512c8
+--- /dev/null
++++ b/ha-cards/src/onu-model.ts
+@@ -0,0 +1,142 @@
++// qoxi: ONU sticks (8311 firmware, Home Assistant "8311 ONU Monitor" integration)
++// rendered as devices in the Omada network card, plus per-ISP traffic rates
++// derived from their GEM byte counters.
++import type { DeviceRecord, HassEntity, HomeAssistant } from "./ha-types";
++import { toNumber } from "./format";
++
++export const DEFAULT_ONU_PREFIX = "8311_onu_";
++
++interface CounterSample { value: number; ts: number }
++const counterHistory = new Map<string, CounterSample>();
++const counterRate = new Map<string, number>();
++
++function unitScale(entity: HassEntity, table: Record<string, number>): number {
++  const unit = String(entity.attributes.unit_of_measurement ?? "");
++  return table[unit] ?? 1;
++}
++
++const BYTES: Record<string, number> = { B: 1, kB: 1e3, KB: 1e3, KiB: 1024, MB: 1e6, MiB: 1048576, GB: 1e9, GiB: 1073741824, TB: 1e12 };
++const SECONDS: Record<string, number> = { s: 1, min: 60, h: 3600, d: 86400 };
++
++/** Bytes per second from a monotonically increasing byte counter, remembered across renders. */
++function counterRateFor(entity: HassEntity): number {
++  const value = toNumber(entity.state) * unitScale(entity, BYTES);
++  const ts = Date.parse(String(entity.attributes.last_updated ?? entity.last_updated ?? "")) || Date.now();
++  const prev = counterHistory.get(entity.entity_id);
++  if (!prev) {
++    counterHistory.set(entity.entity_id, { value, ts });
++    return counterRate.get(entity.entity_id) ?? 0;
++  }
++  if (ts > prev.ts) {
++    const dt = (ts - prev.ts) / 1000;
++    const rate = value >= prev.value && dt > 0 ? (value - prev.value) / dt : 0;
++    counterHistory.set(entity.entity_id, { value, ts });
++    counterRate.set(entity.entity_id, rate);
++  }
++  return counterRate.get(entity.entity_id) ?? 0;
++}
++
++function stripSuffix(name: string, suffix: string): string {
++  return name.endsWith(suffix) ? name.slice(0, -suffix.length).trim() : name;
++}
++
++/** Collect ONU devices from `sensor.<prefix><serial>_<metric>` entities. */
++export function collectOnuDevices(hass: HomeAssistant, prefix = DEFAULT_ONU_PREFIX, site = ""): DeviceRecord[] {
++  const pattern = new RegExp(`^(sensor|binary_sensor)\\.${prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([a-z0-9]+)_(.+)$`);
++  const groups = new Map<string, Map<string, HassEntity>>();
++  for (const entity of Object.values(hass.states)) {
++    const match = pattern.exec(entity.entity_id);
++    if (!match) continue;
++    const [, , serial, metric] = match;
++    let group = groups.get(serial!);
++    if (!group) {
++      group = new Map();
++      groups.set(serial!, group);
++    }
++    group.set(metric!, entity);
++  }
++
++  const devices: DeviceRecord[] = [];
++  for (const [serial, group] of groups) {
++    const get = (key: string) => group.get(key);
++    const state = (key: string) => get(key)?.state ?? "";
++    const num = (key: string) => {
++      const entity = get(key);
++      return entity && entity.state !== "unknown" && entity.state !== "unavailable" ? toNumber(entity.state) : 0;
++    };
++    const link = get("pon_link");
++    const name = link ? stripSuffix(String(link.attributes.friendly_name ?? ""), "PON Link") : `ONU ${serial.toUpperCase()}`;
++    const online = link?.state === "on";
++    const ponState = state("pon_state");
++    const uptimeEntity = get("onu_uptime");
++    const inStateEntity = get("pon_time_in_state");
++    const down = get("gem_downstream");
++    const up = get("gem_upstream");
++
++    const metrics: Record<string, number> = {
++      onu_rx_power_dbm: num("rx_power"),
++      onu_tx_power_dbm: num("tx_power"),
++      onu_optic_temp: num("optic_temperature"),
++      onu_cpu_temp: Math.max(num("cpu0_temperature"), num("cpu1_temperature")),
++      onu_voltage: num("voltage"),
++      onu_tx_bias_ma: num("tx_bias_current"),
++      onu_uptime_seconds: uptimeEntity ? num("onu_uptime") * unitScale(uptimeEntity, SECONDS) : 0,
++      onu_time_in_state_seconds: inStateEntity ? num("pon_time_in_state") * unitScale(inStateEntity, SECONDS) : 0,
++      onu_gem_down_bytes: down ? num("gem_downstream") * unitScale(down, BYTES) : 0,
++      onu_gem_up_bytes: up ? num("gem_upstream") * unitScale(up, BYTES) : 0,
++      onu_gem_down_rate: down ? counterRateFor(down) : 0,
++      onu_gem_up_rate: up ? counterRateFor(up) : 0,
++      onu_gem_key_errors: num("gem_key_errors"),
++      onu_fec_corrected: num("gtc_fec_corrected"),
++      onu_fec_uncorrected: num("gtc_fec_uncorrected"),
++      onu_bip_errors: num("gtc_bip_errors"),
++      onu_lods_events: num("gtc_lods_events"),
++      onu_mem_pct: num("memory_usage"),
++      onu_load_1m: num("cpu_load_1m"),
++      onu_alarm: get("pon_alarms")?.state === "on" ? 1 : 0
++    };
++
++    devices.push({
++      key: `onu:${serial}`,
++      name: name || `ONU ${serial.toUpperCase()}`,
++      type: "onu",
++      model: state("part_number") || "ONU",
++      status: online ? "Connected" : "Disconnected",
++      ip: "",
++      mac: state("gpon_serial"),
++      version: state("pon_mode"),
++      site,
++      attrs: {
++        serial: serial.toUpperCase(),
++        pon_state: ponState,
++        pon_previous_state: state("pon_previous_state"),
++        olt_vendor: state("olt_vendor"),
++        gpon_serial: state("gpon_serial"),
++        vendor: state("vendor"),
++        pon_mode: state("pon_mode"),
++        module_type: state("module_type"),
++        firmware_bank: state("active_firmware_bank"),
++        hardware_revision: state("hardware_revision")
++      },
++      metrics,
++      ports: [],
++      radios: [],
++      clients: []
++    });
++  }
++  return devices.sort((a, b) => a.name.localeCompare(b.name));
++}
++
++function tokens(value: string): string[] {
++  return value.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
++}
++
++/** Find the ONU that serves a WAN/ISP row by name tokens (e.g. "LinkCom_sfp2" ↔ "ONU LinkCom (sfp2)"). */
++export function findOnuForLink(onus: DeviceRecord[], linkName: string): DeviceRecord | undefined {
++  const want = tokens(linkName);
++  if (want.length === 0) return undefined;
++  return onus.find((onu) => {
++    const have = new Set(tokens(onu.name));
++    return want.every((t) => have.has(t));
++  });
++}
