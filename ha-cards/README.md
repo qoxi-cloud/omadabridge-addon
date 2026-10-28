@@ -11,4 +11,4 @@ Then upload `dist/omada-network-card.js` to HA `/config/www/` and bump the `?v=`
 
 | patch | what |
 | --- | --- |
-| 0001-fill-panel-height | `.frame` fills the panel view (`height: calc(100vh - var(--qoxi-frame-offset, 58px))`) instead of a fixed 16:9 box; lists scroll inside. |
+| 0001-fill-panel-height | `.frame` fills the panel view (`height: calc(100vh - var(--qoxi-frame-offset, 58px))`) instead of a fixed 16:9 box; lists scroll inside. Also `ha-card { border-radius: 0 }` for edge-to-edge panel view. |

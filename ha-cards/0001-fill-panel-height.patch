@@ -1,6 +1,12 @@
 --- a/src/omada-network-card.ts
 +++ b/src/omada-network-card.ts
-@@ -133,7 +133,9 @@
+@@ -129,11 +129,14 @@
+       color: var(--text);
+       background: var(--bg);
+       border: 1px solid rgba(255, 255, 255, 0.06);
+-      border-radius: 28px;
++      /* qoxi: edge-to-edge in the panel view, no rounded outer corners */
++      border-radius: 0;
        box-shadow: 0 24px 56px rgba(0, 0, 0, 0.28);
      }
      .frame {
