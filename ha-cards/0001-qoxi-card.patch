@@ -49,7 +49,7 @@ index 017a599..63d4260 100644
        gateway: 1,
        switch: 2,
 diff --git a/ha-cards/src/omada-network-card.ts b/ha-cards/src/omada-network-card.ts
-index 64bc2a0..9cce08f 100644
+index 64bc2a0..40bde2c 100644
 --- a/ha-cards/src/omada-network-card.ts
 +++ b/ha-cards/src/omada-network-card.ts
 @@ -12,6 +12,7 @@ import { inspectionAriaLabel } from "./accessibility";
@@ -90,15 +90,13 @@ index 64bc2a0..9cce08f 100644
      .eyebrow, th { color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.7rem; font-weight: 600; }
      .site-name { font-size: clamp(1.6rem, 2.6vw, 2.3rem); font-weight: 600; line-height: 1; }
      .site-meta, .row-subtitle, .chip-sub, .detail-sub { color: var(--muted); }
-@@ -287,6 +297,16 @@ export class OmadaNetworkCard extends LitElement {
+@@ -287,6 +297,14 @@ export class OmadaNetworkCard extends LitElement {
        .header, .content, .link-grid, .detail-hero, .chart-stack, .detail-bottom { grid-template-columns: 1fr; }
      }
      @media (max-width: 600px) { .chips, .chips.has-dpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 +    /* qoxi: ONU detail — keep stat values on one line */
 +
-+    .onu-detail .detail-title .metric-group { flex-wrap: nowrap; }
 +    .onu-detail .detail-title .metric-tag { white-space: nowrap; flex: none; }
-+    .onu-detail .detail-title .metric-group { margin-left: 0.75rem; }
 +    .onu-detail .detail-stat { min-width: 0; }
 +    .onu-detail .detail-stat-value { font-size: 0.92rem; line-height: 1.25; overflow-wrap: anywhere; }
 +    /* qoxi: breathing room above detail-card titles (they sat on the panel edge) */
@@ -107,7 +105,7 @@ index 64bc2a0..9cce08f 100644
      .control-box { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; white-space: normal; }
      .control-box p { margin: 8px 0; overflow-wrap: anywhere; }
      .control-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-@@ -309,7 +329,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -309,7 +327,7 @@ export class OmadaNetworkCard extends LitElement {
    private _selection: Selection | undefined;
    private _dpiCategoryFilters: ReadonlyMap<string, string> = new Map();
    private _clientFilter: "all" | "wireless" | "wired" = "all";
@@ -116,7 +114,7 @@ index 64bc2a0..9cce08f 100644
    private _filteredClients: ClientRecord[] = [];
    private _filteredDevices: DeviceRecord[] = [];
    private _visibleClients: ClientRecord[] = [];
-@@ -410,8 +430,8 @@ export class OmadaNetworkCard extends LitElement {
+@@ -410,8 +428,8 @@ export class OmadaNetworkCard extends LitElement {
        <ha-card>
          <div class="frame">
            <section class="header">
@@ -127,7 +125,7 @@ index 64bc2a0..9cce08f 100644
              </div>
              <div class="panel header-right">
                <div class="chips ${this._model.dpi.available ? "has-dpi" : ""}">${this.renderSummaryChips()}</div>
-@@ -470,9 +490,10 @@ export class OmadaNetworkCard extends LitElement {
+@@ -470,9 +488,10 @@ export class OmadaNetworkCard extends LitElement {
      return devices.filter((device) => device.type === filter);
    }
  
@@ -140,7 +138,7 @@ index 64bc2a0..9cce08f 100644
      }
  
      const nextDevices = this.computeFilteredDevices(filter);
-@@ -600,8 +621,10 @@ export class OmadaNetworkCard extends LitElement {
+@@ -600,8 +619,10 @@ export class OmadaNetworkCard extends LitElement {
                const status = wanDisplayStatus(row, wan);
                const latency = wan?.metrics.omada_wan_latency ?? 0;
                const speed = wan?.metrics.omada_wan_link_speed_mbps ?? 0;
@@ -153,7 +151,7 @@ index 64bc2a0..9cce08f 100644
                return html`
                  <tr>
                    <td>${ispName}</td>
-@@ -698,7 +721,8 @@ export class OmadaNetworkCard extends LitElement {
+@@ -698,7 +719,8 @@ export class OmadaNetworkCard extends LitElement {
            <div class="row-subtitle">${this._filteredDevices.length} shown</div>
          </div>
          <div class="pill-row" role="group" aria-label="Device filters">
@@ -163,7 +161,7 @@ index 64bc2a0..9cce08f 100644
            ${this.renderDeviceFilterPill("controller", `Controller (${this._model!.siteSummary.controllers})`)}
            ${this.renderDeviceFilterPill("gateway", `Gateway (${this._model!.siteSummary.gateways})`)}
            ${this.renderDeviceFilterPill("switch", `Switch (${this._model!.siteSummary.switches})`)}
-@@ -707,6 +731,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -707,6 +729,7 @@ export class OmadaNetworkCard extends LitElement {
          <div class="list-scroll">
            ${repeat(devices, (device) => device.key, (device) => {
              const selected = this._selection?.kind === "device" && this._selection.key === device.key;
@@ -171,7 +169,7 @@ index 64bc2a0..9cce08f 100644
              const cpu = device.metrics.omada_device_cpu_percentage ?? 0;
              const mem = device.metrics.omada_device_mem_percentage ?? 0;
              const isUp = isDeviceConnected(device.status);
-@@ -746,7 +771,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -746,7 +769,7 @@ export class OmadaNetworkCard extends LitElement {
    }
  
    private renderDeviceFilterPill(
@@ -180,7 +178,7 @@ index 64bc2a0..9cce08f 100644
      label: string
    ) {
      return html`
-@@ -837,6 +862,7 @@ export class OmadaNetworkCard extends LitElement {
+@@ -837,6 +860,7 @@ export class OmadaNetworkCard extends LitElement {
        return renderDpiDetail(this._model.dpi, this._dpiCategoryFilters, (siteKey, categoryKey) => this.selectDpiCategory(siteKey, categoryKey));
      }
      if (this._selection.kind === "device") {
@@ -188,7 +186,7 @@ index 64bc2a0..9cce08f 100644
        return this._selectedDevice ? this.renderDeviceDetail(this._selectedDevice) : html`<div class="empty">Device not found.</div>`;
      }
      return this._selectedClient ? this.renderClientDetail(this._selectedClient) : html`<div class="empty">Client not found.</div>`;
-@@ -1148,6 +1174,127 @@ export class OmadaNetworkCard extends LitElement {
+@@ -1148,6 +1172,129 @@ export class OmadaNetworkCard extends LitElement {
      </div>`;
    }
  
@@ -253,10 +251,11 @@ index 64bc2a0..9cce08f 100644
 +            <div class="detail-title">
 +              <div>
 +                <div class="detail-name">${device.name}</div>
-+                <div class="detail-sub">${device.model || "ONU"} · ${String(device.attrs.vendor || "")} · ${String(device.attrs.pon_state || device.status)}</div>
++                <div class="detail-sub">${device.model || "ONU"} · ${String(device.attrs.pon_state || device.status)}</div>
 +              </div>
 +              <div class="metric-group">
-+                <span class="metric-tag">${device.version || "PON"} · bank ${String(device.attrs.firmware_bank || "?")}</span>
++                <span class="metric-tag">${device.version || "PON"}</span>
++                <span class="metric-tag">bank ${String(device.attrs.firmware_bank || "?")}</span>
 +              </div>
 +            </div>
 +            <div class="detail-stats">
@@ -281,6 +280,7 @@ index 64bc2a0..9cce08f 100644
 +            <div class="section-title"><span>PON Link</span><span>${String(device.attrs.olt_vendor || "-")} OLT</span></div>
 +            <div class="table">
 +              <table><tbody>
++                ${this.attributeRow("Vendor", String(device.attrs.vendor || "-"))}
 +                ${this.attributeRow("PON state", String(device.attrs.pon_state || "-"))}
 +                ${this.attributeRow("Previous state", String(device.attrs.pon_previous_state || "-"))}
 +                ${this.attributeRow("PON mode", String(device.attrs.pon_mode || "-"))}
