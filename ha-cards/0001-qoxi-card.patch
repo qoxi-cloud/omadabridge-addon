@@ -49,7 +49,7 @@ index 017a599..63d4260 100644
        gateway: 1,
        switch: 2,
 diff --git a/ha-cards/src/omada-network-card.ts b/ha-cards/src/omada-network-card.ts
-index 64bc2a0..8a2f694 100644
+index 64bc2a0..1b87b60 100644
 --- a/ha-cards/src/omada-network-card.ts
 +++ b/ha-cards/src/omada-network-card.ts
 @@ -12,6 +12,7 @@ import { inspectionAriaLabel } from "./accessibility";
@@ -100,7 +100,7 @@ index 64bc2a0..8a2f694 100644
 +    .onu-detail .detail-stat { min-width: 0; padding: 0.6rem 0.65rem; display: flex; flex-direction: column; justify-content: center; }
 +    .onu-detail .detail-stat-label { white-space: nowrap; }
 +    .onu-detail .detail-stat-value { font-size: 0.9rem; line-height: 1.3; white-space: nowrap; margin-top: 0.3rem; }
-+    .onu-detail .detail-stats { align-items: stretch; }
++    .onu-detail .detail-stats { align-items: stretch; margin-top: 0.9rem; }
 +    .onu-detail .detail-title { align-items: center; }
 +    /* qoxi: breathing room above detail-card titles (they sat on the panel edge) */
 +    .detail-panel .detail-card { padding: 1rem 0.85rem 0.9rem; }
