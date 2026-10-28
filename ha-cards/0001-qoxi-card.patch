@@ -47,7 +47,7 @@ index 017a599..63d4260 100644
        gateway: 1,
        switch: 2,
 diff --git a/ha-cards/src/omada-network-card.ts b/ha-cards/src/omada-network-card.ts
-index 64bc2a0..57c7d6e 100644
+index 64bc2a0..7cdb935 100644
 --- a/ha-cards/src/omada-network-card.ts
 +++ b/ha-cards/src/omada-network-card.ts
 @@ -12,6 +12,7 @@ import { inspectionAriaLabel } from "./accessibility";
@@ -82,9 +82,9 @@ index 64bc2a0..57c7d6e 100644
 +    /* qoxi: custom logo via logo_url (any image the browser can load) */
 +    .brand-logo img.brand-img { width: 100%; max-width: 220px; height: auto; display: block; }
 +    /* qoxi: with logo_url the brand panel becomes a full-bleed image tile */
-+    .panel.brand.brand-full { padding: 0; overflow: hidden; min-height: 0; }
++    .panel.brand.brand-full { padding: 0; overflow: hidden; min-height: 0; background: linear-gradient(135deg, #0f1b33, #091226); }
 +    .panel.brand.brand-full .brand-logo { width: 100%; height: 100%; }
-+    .panel.brand.brand-full img.brand-img { width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: center; }
++    .panel.brand.brand-full img.brand-img { width: 100%; height: 100%; max-width: none; object-fit: contain; object-position: center; }
      .eyebrow, th { color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.7rem; font-weight: 600; }
      .site-name { font-size: clamp(1.6rem, 2.6vw, 2.3rem); font-weight: 600; line-height: 1; }
      .site-meta, .row-subtitle, .chip-sub, .detail-sub { color: var(--muted); }
